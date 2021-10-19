@@ -1,0 +1,31 @@
+{
+  "name": "releasesdebrepo",
+  "version": "1.0.0",
+  "description": "Create Localy Debian Repository",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sirherobrine23/ReleasesDebRepo.git"
+  },
+  "keywords": [
+    "debian",
+    "packages",
+    "deb",
+    "apt"
+  ],
+  "author": "Sirherobrine23",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/Sirherobrine23/ReleasesDebRepo/issues"
+  },
+  "homepage": "https://github.com/Sirherobrine23/ReleasesDebRepo#readme",
+  "dependencies": {
+    "cron": "^1.8.2",
+    "js-yaml": "^4.1.0",
+    "minimist": "^1.2.5",
+    "node-fetch": "^3.0.0"
+  }
+}
