@@ -14,7 +14,12 @@ async function ConfigManeger() {
   let ConfigBase = {
     global: {
       path: path.resolve(cli_args.download_path || os.homedir(), ".DebianRepo/"),
-      tmp: path.resolve(cli_args.download_path || os.homedir(), ".DebianRepo/tmp/")
+      tmp: path.resolve(cli_args.download_path || os.homedir(), ".DebianRepo/tmp/"),
+      cron: {
+        enable: cli_args.cron || false,
+        interval: cli_args.interval || "0 0 * * *"
+      },
+      list_size: 30
     },
     gitlab: {
       repos: [
@@ -62,9 +67,10 @@ async function ConfigManeger() {
       path: ConfigBase.global.path,
       tmp: ConfigBase.global.tmp,
       cron: {
-        enable: cli_args.cron || false,
-        interval: cli_args.interval || "0 0 * * *"
-      }
+        enable: ConfigBase.global.cron.enable,
+        interval: ConfigBase.global.cron.interval
+      },
+      list_size: ConfigBase.global.list_size
     },
     gitlab: {
       repos: ConfigBase.gitlab.repos.filter(repo => repo.id)
@@ -96,7 +102,7 @@ async function DownloadAndOrganize() {
   for (let repository of Config.github.repos) {
     try {
       if (repository.github_enterprise) {
-        const Enter = await github_releases.Enterprise(repository.user, repository.repo, repository.token, repository.github_enterprise);
+        const Enter = await github_releases.Enterprise(repository.user, repository.repo, repository.token, Config.global.list_size, repository.github_enterprise);
         releases.push({
           type: "github",
           user: repository.user,
@@ -104,7 +110,7 @@ async function DownloadAndOrganize() {
           releases: Enter
         });
       } else {
-        const GitHub = await github_releases.Github_com(repository.user, repository.repo, repository.token);
+        const GitHub = await github_releases.Github_com(repository.user, repository.repo, repository.token, Config.global.list_size);
         releases.push({
           type: "github",
           user: repository.user,

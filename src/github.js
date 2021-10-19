@@ -1,8 +1,8 @@
 const request = require("../lib/request");
 
 // Github.com API
-async function Github_com (username = "", repo = "", token = "") {
-  const url = `https://api.github.com/repos/${username}/${repo}/releases?per_page=100`;
+async function Github_com (username = "", repo = "", token = "", list_size = 30) {
+  const url = `https://api.github.com/repos/${username}/${repo}/releases?per_page=${list_size}`;
   const FetchOPtions = {};
   if (token) {
     FetchOPtions.headers = {
@@ -45,8 +45,8 @@ async function Github_com (username = "", repo = "", token = "") {
 }
 
 // Enterprise API
-async function Enterprise (username = "", repo = "", Token = "", API_HOST = "") {
-  const url = `https://${API_HOST}/repos/${username}/${repo}/release?per_page=100`;
+async function Enterprise (username = "", repo = "", token = "", list_size = 30, API_HOST = "") {
+  const url = `https://${API_HOST}/repos/${username}/${repo}/release?per_page=${list_size}`;
   const FetchOPtions = {};
   if (token) {
     FetchOPtions.headers = {
