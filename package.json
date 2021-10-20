@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/Sirherobrine23/ReleasesDebRepo#readme",
   "dependencies": {
+    "cli-color": "^2.0.1",
     "cron": "^1.8.2",
     "js-yaml": "^4.1.0",
     "minimist": "^1.2.5",

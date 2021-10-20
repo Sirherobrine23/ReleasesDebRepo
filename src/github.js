@@ -45,7 +45,7 @@ async function Github_com (username = "", repo = "", token = "", list_size = 30)
 }
 
 // Enterprise API
-async function Enterprise (username = "", repo = "", token = "", list_size = 30, API_HOST = "") {
+async function Enterprise (username = "", repo = "", token = "", list_size = 5, API_HOST = "") {
   const url = `https://${API_HOST}/repos/${username}/${repo}/release?per_page=${list_size}`;
   const FetchOPtions = {};
   if (token) {
