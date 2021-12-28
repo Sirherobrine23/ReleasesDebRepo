@@ -61,13 +61,13 @@ async function ReadDirRecursive(dir = "./") {
 }
 
 app.use("/repo", async (req, res) => {
-  const PathReq = path.join(PathRepo, req.path);
+  const PathReq = path.resolve(path.join(PathRepo, req.path));
   console.log(PathReq);
   if (fs.existsSync(PathReq)) {
     if (fs.statSync(PathReq).isDirectory()) {
       const Data = await ReadDirRecursive(PathReq);
       res.json(Data.map(File => {
-        File.path = File.path.replace(PathReq, "/");
+        File.path = File.path.replace(PathReq, "");
         return File;
       }));
     } else {
