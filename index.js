@@ -9,6 +9,7 @@ const js_yaml = require("js-yaml");
 const fs = require("fs");
 const os = require("os");
 const child_process = require("child_process");
+const crypto = require("crypto");
 const cron = require("cron");
 const clicolor = require("cli-color");
 const github_releases = require("./src/github");
@@ -20,6 +21,7 @@ async function ConfigManeger() {
     global: {
       path: path.resolve(cli_args.download_path || os.homedir(), ".DebianRepo/"),
       tmp: path.resolve(cli_args.download_path || os.homedir(), ".DebianRepo/tmp/"),
+      repository_name: crypto.randomBytes(16).toString("hex"),
       gpg: {
         passphrase: cli_args.gpg_passphrase || "",
         public_key: cli_args.gpg_public_key || "",
@@ -66,17 +68,18 @@ async function ConfigManeger() {
   // Parse Config File
   const Config = {
     global: {
-      path: ConfigBase.global.path,
-      tmp: ConfigBase.global.tmp,
+      path: ConfigBase.global.path || path.resolve(os.homedir(), ".DebianRepo/"),
+      tmp: ConfigBase.global.tmp || path.resolve(os.homedir(), ".DebianRepo/tmp/"),
+      repository_name: ConfigBase.global.repository_name || crypto.randomBytes(16).toString("hex"),
       cron: {
-        enable: ConfigBase.global.cron.enable,
-        interval: ConfigBase.global.cron.interval
+        enable: ConfigBase.global.cron.enable || false,
+        interval: ConfigBase.global.cron.interval || "0 0 * * *"
       },
-      list_size: ConfigBase.global.list_size,
+      list_size: ConfigBase.global.list_size || 5,
       gpg: {
-        passphrase: ConfigBase.global.gpg.passphrase,
-        public_key: ConfigBase.global.gpg.public_key,
-        private_key: ConfigBase.global.gpg.private_key
+        passphrase: ConfigBase.global.gpg.passphrase || "",
+        public_key: ConfigBase.global.gpg.public_key || "",
+        private_key: ConfigBase.global.gpg.private_key || ""
       }
     },
     github: {
@@ -93,6 +96,8 @@ async function ConfigManeger() {
   
   return Config;
 }
+
+module.exports.ConfigManeger = ConfigManeger;
 
 async function DownloadAndOrganize() {
   const Config = await ConfigManeger();
@@ -194,6 +199,7 @@ async function DownloadAndOrganize() {
 async function main() {
   const Config = await ConfigManeger();
   if (cli_args.express) express_repo.listen(parseInt(cli_args.express) || 8080);
+  await DownloadAndOrganize();
   // Cron
   if (cli_args.cron || Config.global.cron.enable) {
     const cronjob = new cron.CronJob(Config.global.cron.interval, async () => {
@@ -202,7 +208,6 @@ async function main() {
     });
     cronjob.start();
   }
-  return await DownloadAndOrganize();
 }
 
 main();

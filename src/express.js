@@ -10,19 +10,26 @@ const PathRepo = path.join(path.resolve(cli_args.download_path || os.homedir(), 
 const app = express();
 app.use(cors());
 app.use(express_prettify({always: true}));
-app.get(["/", "/setup_script"], (req, res) => {
+app.get(["/", "/setup_script"], async (req, res) => {
+  const { ConfigManeger } = require("../index");
   if (!(fs.existsSync(PathRepo))) {
     res.status(401).json({
       error: "Repo not created"
     })
     return;
   }
+  const Config = await ConfigManeger();
   const Host = req.query.host || req.headers.host;
-  const Protocol = req.query.protocol || req.headers.protocol || "http";
-  const Prefix = req.query.termux === "true" ? "/data/data/com.termux/files/usr" : ""
-  const Components = fs.readdirSync(PathRepo);
+  const Protocol = req.query.protocol || req.protocol || "http";
+  const Prefix = req.query.termux === "true" ? "/data/data/com.termux/files/usr" : "";
+  const Components = fs.readdirSync(path.join(PathRepo, "dists/ubuntu")).filter(File => fs.statSync(path.resolve(PathRepo, "dists/ubuntu", File)).isDirectory());
   const ShellScript = [`#!${Prefix}/bin/env bash`, "", ""];
-  ShellScript.push(`echo "deb ${Protocol}://${Host}/repo ${Components.join(" ")}" | sudo tee ${Prefix}/etc/apt/sources.list.d/${Components.join("_")}.list`);
+  let RepoConfig = "";
+  if (Config.global.gpg.public_key) {
+    ShellScript.push(`echo "${Config.global.gpg.public_key}" | apt-key add -`);
+  }
+  if (RepoConfig) RepoConfig = `[${RepoConfig}] `;
+  ShellScript.push(`echo "deb ${RepoConfig}${Protocol}://${Host}/repo ${Components.join(" ")}" | sudo tee ${Prefix}/etc/apt/sources.list.d/${Config.global.repository_name}.list`);
   ShellScript.push("apt update");
   ShellScript.push("");
   ShellScript.push("exit 0");
@@ -32,7 +39,11 @@ app.get(["/", "/setup_script"], (req, res) => {
 
 async function ReadDirRecursive(dir = "./") {
   const Files = fs.readdirSync(dir);
-  const Result = [];
+  let Result = [{
+    path: "",
+    size: 0,
+    mtime: ""
+  }]; Result = [];
   for (const File of Files) {
     const FilePath = path.join(dir, File);
     if (fs.statSync(FilePath).isDirectory()) {
@@ -42,7 +53,8 @@ async function ReadDirRecursive(dir = "./") {
       Result.push({
         path: FilePath,
         size: FileStat.size,
-        mtime: FileStat.mtime.toString()
+        mtime: FileStat.mtime.toString(),
+        type: FileStat.isDirectory() ? "dir" : "file"
       });
     }
   }
@@ -55,7 +67,10 @@ app.use("/repo", async (req, res) => {
   if (fs.existsSync(PathReq)) {
     if (fs.statSync(PathReq).isDirectory()) {
       const Data = await ReadDirRecursive(PathReq);
-      res.json(Data.map(File => File.replace(PathRepo, "")));
+      res.json(Data.map(File => {
+        File.path = File.path.replace(PathReq, "/");
+        return File;
+      }));
     } else {
       res.sendFile(PathReq);
     }
