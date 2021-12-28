@@ -99,6 +99,32 @@ async function ConfigManeger() {
 
 module.exports.ConfigManeger = ConfigManeger;
 
+const aptly_config_base = {
+    rootDir: "~/.aptly",
+    downloadConcurrency: 4,
+    downloadSpeedLimit: 0,
+    downloadRetries: 0,
+    databaseOpenAttempts: -1,
+    architectures: [],
+    dependencyFollowSuggests: false,
+    dependencyFollowRecommends: false,
+    dependencyFollowAllVariants: false,
+    dependencyFollowSource: false,
+    dependencyVerboseResolve: false,
+    gpgDisableSign: false,
+    gpgDisableVerify: false,
+    gpgProvider: "gpg2",
+    downloadSourcePackages: false,
+    skipLegacyPool: false,
+    ppaDistributorID: "apt_repo",
+    ppaCodename: "focal",
+    skipContentsPublishing: false,
+    FileSystemPublishEndpoints: {},
+    S3PublishEndpoints: {},
+    SwiftPublishEndpoints: {}
+  }
+module.exports.aptly_config_base = aptly_config_base;
+
 async function DownloadAndOrganize() {
   const Config = await ConfigManeger();
 
@@ -129,30 +155,8 @@ async function DownloadAndOrganize() {
     } catch (err) {console.log(err);}
   }
 
-  const aptly_config = {
-    rootDir: Config.global.path,
-    downloadConcurrency: 4,
-    downloadSpeedLimit: 0,
-    downloadRetries: 0,
-    databaseOpenAttempts: -1,
-    architectures: [],
-    dependencyFollowSuggests: false,
-    dependencyFollowRecommends: false,
-    dependencyFollowAllVariants: false,
-    dependencyFollowSource: false,
-    dependencyVerboseResolve: false,
-    gpgDisableSign: false,
-    gpgDisableVerify: false,
-    gpgProvider: "gpg2",
-    downloadSourcePackages: false,
-    skipLegacyPool: false,
-    ppaDistributorID: "ubuntu",
-    ppaCodename: "focal",
-    skipContentsPublishing: false,
-    FileSystemPublishEndpoints: {},
-    S3PublishEndpoints: {},
-    SwiftPublishEndpoints: {}
-  }
+  const aptly_config = aptly_config_base;
+  aptly_config.rootDir = Config.global.path;
   fs.writeFileSync(path.join(os.homedir(), ".aptly.conf"), JSON.stringify(aptly_config, null, 4));
 
   // Download Files And Add to aptly

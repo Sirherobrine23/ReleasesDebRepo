@@ -11,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express_prettify({always: true}));
 app.get(["/", "/setup_script"], async (req, res) => {
-  const { ConfigManeger } = require("../index");
+  const { ConfigManeger, aptly_config_base } = require("../index");
   if (!(fs.existsSync(PathRepo))) {
     res.status(401).json({
       error: "Repo not created"
@@ -22,14 +22,13 @@ app.get(["/", "/setup_script"], async (req, res) => {
   const Host = req.query.host || req.headers.host;
   const Protocol = req.query.protocol || req.protocol || "http";
   const Prefix = req.query.termux === "true" ? "/data/data/com.termux/files/usr" : "";
-  const Components = fs.readdirSync(path.join(PathRepo, "dists/ubuntu")).filter(File => fs.statSync(path.resolve(PathRepo, "dists/ubuntu", File)).isDirectory());
+  const Components = fs.readdirSync(path.join(PathRepo, "dists", aptly_config_base.ppaDistributorID)).filter(File => fs.statSync(path.resolve(PathRepo, "dists", aptly_config_base.ppaDistributorID, File)).isDirectory());
   const ShellScript = [`#!${Prefix}/bin/env bash`, "", ""];
-  let RepoConfig = "";
+  let RepoConfig = ["trusted=yes"];
   if (Config.global.gpg.public_key) {
     ShellScript.push(`echo "${Config.global.gpg.public_key}" | apt-key add -`);
   }
-  RepoConfig = `[trusted=yes ${RepoConfig}]`;
-  ShellScript.push(`echo "deb ${RepoConfig} ${Protocol}://${Host}/repo ${Components.join(" ")}" | sudo tee ${Prefix}/etc/apt/sources.list.d/${Config.global.repository_name}.list`);
+  ShellScript.push(`echo "deb [${RepoConfig.join(" ")}] ${Protocol}://${Host}/repo ${aptly_config_base.ppaDistributorID} ${Components.join(" ")}" | sudo tee ${Prefix}/etc/apt/sources.list.d/${Config.global.repository_name}.list`);
   ShellScript.push("apt update");
   ShellScript.push("");
   ShellScript.push("exit 0");
