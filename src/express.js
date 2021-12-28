@@ -28,8 +28,8 @@ app.get(["/", "/setup_script"], async (req, res) => {
   if (Config.global.gpg.public_key) {
     ShellScript.push(`echo "${Config.global.gpg.public_key}" | apt-key add -`);
   }
-  if (RepoConfig) RepoConfig = `[${RepoConfig}] `;
-  ShellScript.push(`echo "deb ${RepoConfig}${Protocol}://${Host}/repo ${Components.join(" ")}" | sudo tee ${Prefix}/etc/apt/sources.list.d/${Config.global.repository_name}.list`);
+  RepoConfig = `[trusted=yes ${RepoConfig}]`;
+  ShellScript.push(`echo "deb ${RepoConfig} ${Protocol}://${Host}/repo ${Components.join(" ")}" | sudo tee ${Prefix}/etc/apt/sources.list.d/${Config.global.repository_name}.list`);
   ShellScript.push("apt update");
   ShellScript.push("");
   ShellScript.push("exit 0");
