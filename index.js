@@ -12,8 +12,8 @@ const child_process = require("child_process");
 const cron = require("cron");
 const clicolor = require("cli-color");
 const github_releases = require("./src/github");
-const gitlab_releases = require("./src/gitlab");
 const aptly = require("./src/aptly");
+const express_repo = require("./src/express");
 
 async function ConfigManeger() {
   let ConfigBase = {
@@ -31,14 +31,6 @@ async function ConfigManeger() {
       },
       list_size: 5
     },
-    gitlab: {
-      repos: [
-        {
-          token: null,
-          id: null
-        }
-      ]
-    },
     github: {
       repos: [
         {
@@ -51,7 +43,7 @@ async function ConfigManeger() {
     }
 
   };
-  let ConfigPath = path.join(process.cwd(), "config.yaml");
+  let ConfigPath = path.join(cli_args.save_path || process.cwd(), "config.yaml");
   if (cli_args.config) {
     if (typeof cli_args.config !== "string") {
       console.log("config.yaml is not found");
@@ -63,7 +55,7 @@ async function ConfigManeger() {
     console.log("config.yaml is not found");
     fs.writeFileSync(ConfigPath, js_yaml.dump(ConfigBase));
     console.log("config.yaml is created");
-    process.exit(1);
+    if (!cli_args.docker) process.exit(1);
   } else {
     try {ConfigBase = js_yaml.load(fs.readFileSync(ConfigPath, "utf8"));} catch (err) {
       console.log("Error on load Config File");
@@ -87,9 +79,6 @@ async function ConfigManeger() {
         private_key: ConfigBase.global.gpg.private_key
       }
     },
-    gitlab: {
-      repos: ConfigBase.gitlab.repos.filter(repo => repo.id)
-    },
     github: {
       repos: ConfigBase.github.repos.filter(repo => repo.user && repo.repo)
     }
@@ -98,7 +87,6 @@ async function ConfigManeger() {
   // Show dropead repos
   console.log("Dropead Repos");
   console.log("============");
-  console.log("Gitlab:", ConfigBase.gitlab.repos.length - Config.gitlab.repos.length);
   console.log("Github:", ConfigBase.github.repos.length - Config.github.repos.length);
   console.log("============");
   console.log();
@@ -205,7 +193,7 @@ async function DownloadAndOrganize() {
 // Main Function
 async function main() {
   const Config = await ConfigManeger();
-  
+  if (cli_args.express) express_repo.listen(parseInt(cli_args.express) || 8080);
   // Cron
   if (cli_args.cron || Config.global.cron.enable) {
     const cronjob = new cron.CronJob(Config.global.cron.interval, async () => {
@@ -213,7 +201,8 @@ async function main() {
       console.log("Complete");
     });
     cronjob.start();
-  } else return await DownloadAndOrganize();
+  }
+  return await DownloadAndOrganize();
 }
 
 main();

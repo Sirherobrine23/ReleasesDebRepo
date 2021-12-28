@@ -1,0 +1,11 @@
+version: "3.9"
+volumes:
+  AptRepo:
+services:
+  aptrepo:
+    build: .
+    container_name: debian_repo
+    volumes:
+      - AptRepo:/root/.DebianRepo/
+    ports:
+      - "8181:80"
